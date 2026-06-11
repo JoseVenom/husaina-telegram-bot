@@ -3,7 +3,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import black, darkblue, grey
 from reportlab.pdfgen import canvas
 
-def create_pdf(user_data):
+def create_pdf(filename, user_data):
     """
     Generate bilingual employment agreement PDF
     
@@ -14,7 +14,6 @@ def create_pdf(user_data):
         'start_date': '2026-03-26'
     }
     """
-    filename = f"agreement_{user_data['name'].replace(' ', '_')}_{user_data['passport']}.pdf"
     
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
@@ -41,11 +40,11 @@ def create_pdf(user_data):
     
     # ===== EMPLOYEE DETAILS =====
     c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"Employee Name / 员工姓名: {user_data['name']}")
+    c.drawString(50, y, f"Employee Name / 员工姓名: {user_data.get('name', 'N/A')}")
     y -= 20
-    c.drawString(50, y, f"Passport/ID No. / 身份证或护照号码: {user_data['passport']}")
+    c.drawString(50, y, f"Passport/ID No. / 身份证或护照号码: {user_data.get('passport', 'N/A')}")
     y -= 20
-    c.drawString(50, y, f"Start Date / 入职日期: {user_data['start_date']}")
+    c.drawString(50, y, f"Start Date / 入职日期: {user_data.get('start_date', 'N/A')}")
     y -= 30
     
     # ===== SECTION 1 =====
@@ -269,7 +268,7 @@ def create_pdf(user_data):
     c.drawString(50, y, "Employee / 员工")
     y -= 20
     c.setFont("Helvetica", 10)
-    c.drawString(50, y, f"Name: {user_data['name']}")
+    c.drawString(50, y, f"Name: {user_data.get('name', 'N/A')}")
     y -= 15
     c.drawString(50, y, "Signature: ___________________")
     y -= 15
