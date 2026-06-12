@@ -1,4 +1,3 @@
-python-telegram-bot==20.7
-reportlab==4.0.4
-psycopg2-binary==2.9.9
-PyPDF2PyPDF2 
+python-telegram-bot==20.7 
+reportlab==4.0.4 
+psycopg2-binary==2.9.9 

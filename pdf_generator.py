@@ -1,105 +1,130 @@
 from datetime import datetime
-from PyPDF2 import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from io import BytesIO
+from reportlab.lib.colors import black, darkblue
+from reportlab.pdfgen import canvas
 import os
-
-def create_filled_pdf(template_path, output_path, user_data):
-    """
-    Fill the PDF template with user data
-    """
-    # Create an overlay with the user's data
-    packet = BytesIO()
-    c = canvas.Canvas(packet, pagesize=letter)
-    
-    # Set font
-    c.setFont("Helvetica", 11)
-    
-    # ===== COORDINATES FOR YOUR PDF (LETTER SIZE: 612 x 792) =====
-    # Y=0 is bottom, Y=792 is top of page
-    
-    # Page 1 - Employee details (top section, right side)
-    # Adjust these coordinates as needed
-    c.drawString(350, 710, user_data.get('name', '_________________'))      # Employee Name
-    c.drawString(350, 685, user_data.get('passport', '_________________'))   # Passport/ID
-    c.drawString(300, 660, user_data.get('start_date', '_________________')) # Start Date
-    
-    # Page 3 - Signatures (bottom of last page)
-    c.drawString(150, 250, user_data.get('name', '_________________'))       # Employee Name (signature)
-    c.drawString(150, 230, datetime.now().strftime('%Y-%m-%d'))              # Date
-    
-    c.save()
-    packet.seek(0)
-    
-    # Read the template
-    template = PdfReader(open(template_path, 'rb'))
-    writer = PdfWriter()
-    
-    # Merge overlay onto first page
-    overlay_pdf = PdfReader(packet)
-    page1 = template.pages[0]
-    page1.merge_page(overlay_pdf.pages[0])
-    writer.add_page(page1)
-    
-    # Add remaining pages without changes
-    for i in range(1, len(template.pages)):
-        writer.add_page(template.pages[i])
-    
-    # Write the output
-    with open(output_path, 'wb') as output:
-        writer.write(output)
-    
-    return output_path
-
-def create_simple_pdf(filename, user_data):
-    """Fallback: Create a simple PDF if template not found"""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.pdfgen import canvas
-    
-    c = canvas.Canvas(filename, pagesize=letter)
-    width, height = letter
-    
-    y = height - 50
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, y, "EMPLOYMENT AGREEMENT")
-    
-    y -= 40
-    c.setFont("Helvetica", 12)
-    c.drawString(50, y, f"Company: Husaina Parkson")
-    y -= 25
-    c.drawString(50, y, f"Project: Work From Home Project")
-    y -= 25
-    c.drawString(50, y, f"Supervisor: Jose")
-    
-    y -= 40
-    c.drawString(50, y, f"Employee Name: {user_data.get('name', '_____________')}")
-    y -= 25
-    c.drawString(50, y, f"Passport/ID: {user_data.get('passport', '_____________')}")
-    y -= 25
-    c.drawString(50, y, f"Start Date: {user_data.get('start_date', '_____________')}")
-    
-    y -= 50
-    c.drawString(50, y, "Signature: ___________________")
-    y -= 20
-    c.drawString(50, y, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
-    
-    c.save()
-    return filename
 
 def create_pdf(filename, user_data):
     """
-    Main function - fills the existing PDF template with user data
+    Generate a clean PDF agreement (no external template needed)
     """
-    template_path = "EMPLOYMENTAGREEMENT.pdf"
-    
-    # Check if template exists
-    if os.path.exists(template_path):
-        try:
-            return create_filled_pdf(template_path, filename, user_data)
-        except Exception as e:
-            print(f"Error filling PDF: {e}")
-            return create_simple_pdf(filename, user_data)
-    else:
-        print(f"Template {template_path} not found, using simple PDF")
-        return create_simple_pdf(filename, user_data)
+    try:
+        c = canvas.Canvas(filename, pagesize=letter)
+        width, height = letter
+        
+        y = height - 50
+        
+        # Title
+        c.setFont("Helvetica-Bold", 18)
+        c.setFillColor(darkblue)
+        c.drawString((width - c.stringWidth("EMPLOYMENT AGREEMENT", "Helvetica-Bold", 18)) / 2, y, "EMPLOYMENT AGREEMENT")
+        
+        y -= 45
+        c.setFont("Helvetica", 11)
+        c.setFillColor(black)
+        
+        # Company Info
+        c.drawString(50, y, "Company Name: Husaina Parkson")
+        y -= 20
+        c.drawString(50, y, "Project Name: Work From Home Project")
+        y -= 20
+        c.drawString(50, y, "Supervisor: Jose")
+        
+        y -= 30
+        
+        # Employee Details
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "Employee Details:")
+        y -= 20
+        c.setFont("Helvetica", 11)
+        c.drawString(70, y, f"Employee Name: {user_data.get('name', '_________________')}")
+        y -= 18
+        c.drawString(70, y, f"Passport/ID No.: {user_data.get('passport', '_________________')}")
+        y -= 18
+        c.drawString(70, y, f"Nationality: {user_data.get('nationality', '_________________')}")
+        y -= 18
+        c.drawString(70, y, f"Start Date: {user_data.get('start_date', '_________________')}")
+        
+        y -= 35
+        
+        # Section 1
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "1. Position and Employment Status")
+        y -= 20
+        c.setFont("Helvetica", 10)
+        c.drawString(50, y, "The Employee is hired by Husaina Parkson under the Work From Home Project managed by Supervisor Jose.")
+        y -= 16
+        c.drawString(50, y, "The first three (3) months shall be considered a temporary/probationary period.")
+        y -= 16
+        c.drawString(50, y, "Upon successful completion, the Employee may be confirmed as a permanent employee.")
+        
+        y -= 30
+        
+        # Section 2
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "2. Working Hours")
+        y -= 20
+        c.setFont("Helvetica", 10)
+        c.drawString(50, y, "The Employee shall work twelve (12) hours per day according to the schedule assigned.")
+        y -= 16
+        c.drawString(50, y, "All work activities shall be monitored and controlled by the Supervisor.")
+        
+        y -= 30
+        
+        # Section 3
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "3. Work From Home Requirements")
+        y -= 20
+        c.setFont("Helvetica", 10)
+        c.drawString(50, y, "The Employee must arrange and maintain:")
+        y -= 16
+        c.drawString(65, y, "- Personal Computer (PC)")
+        y -= 14
+        c.drawString(65, y, "- Stable Internet Connection")
+        y -= 14
+        c.drawString(65, y, "- Necessary working environment")
+        
+        y -= 30
+        
+        # Section 4
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "4. Salary and Benefits")
+        y -= 20
+        c.setFont("Helvetica", 10)
+        c.drawString(50, y, "During probationary period: Basic Salary 800 USDT per month")
+        y -= 16
+        c.drawString(50, y, "After completion: Basic Salary increases to 950 USDT per month")
+        y -= 16
+        c.drawString(50, y, "Additional performance-based incentives available.")
+        
+        y -= 30
+        
+        # Section 5
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "5. Resignation Policy")
+        y -= 20
+        c.setFont("Helvetica", 10)
+        c.drawString(50, y, "If the Employee resigns during the probationary period, a compensation fee of")
+        y -= 16
+        c.drawString(50, y, "500 USDT shall be paid to the Company.")
+        
+        y -= 35
+        
+        # Signatures
+        c.line(60, y, 250, y)
+        c.drawString(60, y - 12, "Employee Signature")
+        c.line(310, y, 500, y)
+        c.drawString(310, y - 12, "Supervisor Signature")
+        
+        y -= 30
+        c.drawString(60, y, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
+        
+        c.save()
+        
+        if os.path.exists(filename):
+            return filename
+        return None
+        
+    except Exception as e:
+        print(f"Error creating PDF: {e}")
+        return None
