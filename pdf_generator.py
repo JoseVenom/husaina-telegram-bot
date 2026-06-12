@@ -6,7 +6,7 @@ import os
 
 def create_pdf(filename, user_data):
     """
-    Generate a clean PDF agreement (no external template needed)
+    Generate a clean PDF agreement with user data
     """
     try:
         c = canvas.Canvas(filename, pagesize=letter)
