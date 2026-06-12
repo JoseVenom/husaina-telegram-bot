@@ -1,64 +1,77 @@
 import os
 from datetime import datetime
-from pdfrw import PdfReader, PdfWriter, PageMerge
+from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
 
-def create_overlay(user_data):
-    """Create an overlay with the user's data to place on the PDF"""
+def create_filled_pdf(template_path, output_path, user_data):
+    """
+    Fill the PDF template with user data
+    """
+    # Create an overlay with the user data
     packet = BytesIO()
     c = canvas.Canvas(packet, pagesize=letter)
     
-    # Set font and size for the data fields
+    # Set font
     c.setFont("Helvetica", 11)
     
-    # Position these coordinates based on your PDF template
-    # You'll need to adjust these X,Y coordinates to match where fields are on your PDF
+    # === POSITION COORDINATES (X, Y) ===
+    # These coordinates need to be adjusted based on your PDF
+    # Y=0 is bottom of page, Y=792 is top of page (Letter size)
     
-    # Example coordinates - YOU MUST ADJUST THESE!
-    # To find correct coordinates, print the PDF and measure or trial/error
+    # Page 1 - Employee details (around top section)
+    # Based on your PDF, these are approximate positions
+    c.drawString(350, 710, user_data.get('name', '_________________'))  # Employee Name
+    c.drawString(350, 685, user_data.get('passport', '_________________'))  # Passport ID
+    c.drawString(300, 660, user_data.get('start_date', '_________________'))  # Start Date
     
-    c.drawString(150, 650, user_data.get('name', '_________________'))
-    c.drawString(150, 620, user_data.get('passport', '_________________'))
-    c.drawString(150, 590, user_data.get('start_date', '_________________'))
-    c.drawString(150, 560, datetime.now().strftime('%Y-%m-%d'))  # Today's date
+    # Page 1 - Supervisor signature area (bottom of page 1)
+    # Adjust these coordinates
+    c.drawString(400, 200, "Jose")  # Supervisor Name
+    c.drawString(400, 180, datetime.now().strftime('%Y-%m-%d'))  # Date
     
+    # Save the overlay
     c.save()
     packet.seek(0)
-    return packet
+    overlay_pdf = PdfReader(packet)
+    
+    # Read the template
+    template = PdfReader(open(template_path, 'rb'))
+    writer = PdfWriter()
+    
+    # Merge overlay onto first page
+    page = template.pages[0]
+    page.merge_page(overlay_pdf.pages[0])
+    writer.add_page(page)
+    
+    # Add remaining pages without changes
+    for i in range(1, len(template.pages)):
+        writer.add_page(template.pages[i])
+    
+    # Write the output
+    with open(output_path, 'wb') as output:
+        writer.write(output)
+    
+    return output_path
 
 def create_pdf(filename, user_data):
     """
-    Fill existing EMPLOYMENTAGREEMENT.pdf with user data
+    Main function to create filled PDF
     """
-    # Path to your existing PDF template
     template_path = "EMPLOYMENTAGREEMENT.pdf"
     
+    # Check if template exists
     if not os.path.exists(template_path):
-        # If template doesn't exist, create a simple one
+        # If template not found, create a simple backup
         return create_simple_pdf(filename, user_data)
     
-    # Create overlay with user data
-    overlay_packet = create_overlay(user_data)
-    overlay_pdf = PdfReader(overlay_packet)
-    
-    # Read the template
-    template_pdf = PdfReader(template_path)
-    
-    # Merge overlay onto each page
-    writer = PdfWriter()
-    for page in template_pdf.pages:
-        overlay = PageMerge().add(overlay_pdf.pages[0])[0]
-        PageMerge(page).add(overlay).render()
-        writer.addpage(page)
-    
-    # Save the filled PDF
-    writer.write(filename)
-    return filename
+    return create_filled_pdf(template_path, filename, user_data)
 
 def create_simple_pdf(filename, user_data):
-    """Fallback: Create a simple PDF if template not found"""
+    """
+    Fallback: Create simple PDF if template not found
+    """
     from reportlab.lib.pagesizes import letter
     from reportlab.pdfgen import canvas
     

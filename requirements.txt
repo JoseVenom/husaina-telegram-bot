@@ -2,3 +2,5 @@ python-telegram-bot==20.7
 reportlab==4.0.4
 psycopg2-binary==2.9.9pdfrw 
 pdfrw 
+PyPDF2
+PyPDF2 
